@@ -136,3 +136,5 @@ Este proyecto está bajo la licencia **MIT**. Consulta el archivo `LICENSE` para
 
 **Kendo Ulises**
 
+## Créditos
+Este proyecto usa [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) (BSD 3-Clause License) para el upscaling de imágenes.
