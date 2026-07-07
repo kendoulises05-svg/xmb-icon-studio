@@ -64,8 +64,8 @@ El proyecto combina procesamiento de imágenes con IA, criptografía y una exper
 
 1. Clona el repositorio:
    ```bash
-   git clone https://github.com/kendoulises05-svg/XMB_Version4.git
-   cd XMB_Version4
+   git clone https://github.com/kendoulises05-svg/xmb-icon-studio.git
+   cd xmb-icon-studio
    ```
 
 2. Instala las dependencias de Node:
