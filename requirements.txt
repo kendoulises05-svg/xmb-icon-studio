@@ -1,0 +1,4 @@
+npm init -y
+npm install electron sharp png-to-ico dotenv
+npx electron 
+npm start

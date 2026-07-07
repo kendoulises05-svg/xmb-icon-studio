@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICO Converter XMB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style_V7.css">
+</head>
+<body>
+
+<!-- FONDO -->
+<div id="bg-dark"></div>
+<!-- Imagen de fondo estática — se muestra cuando no hay video -->
+<div id="bg-img"></div>
+<video autoplay muted loop id="bg-video">
+  <source src="assets/ps3-wave.mp4" type="video/mp4">
+</video>
+<div class="scanlines"></div>
+
+<!-- TOASTS -->
+<div id="toasts"></div>
+
+<!-- LOADING — NO MODIFICADO -->
+<div class="overlay-loading" id="overlayLoading">
+  <div class="loading-box">
+    <div class="ps3-spinner"><span></span><span></span><span></span></div>
+    <p id="loadingMsg">Procesando...</p>
+    <p class="loading-sub" id="loadingSub"></p>
+  </div>
+</div>
+
+<!-- XMB -->
+<div class="xmb">
+
+  <!-- Reloj — PS3 real: MM/DD HH:MM AM/PM horizontal -->
+  <header class="xmb-header">
+    <span id="xmbDate"></span>
+    <span class="clock-sep">·</span>
+    <span id="xmbTime"></span>
+  </header>
+
+  <!-- Línea horizontal -->
+  <div class="xmb-line"></div>
+
+  <!-- BARRA HORIZONTAL — 5 columnas -->
+  <nav class="xmb-bar" id="xmbBar">
+
+    <div class="xmb-col" data-col="0" data-dist="0">
+      <button class="xmb-icon" aria-label="Studio">
+        <i class="fas fa-cubes"></i>
+        <div class="xmb-glow"></div>
+        <span class="multi-badge" id="multiBadge"></span>
+      </button>
+      <span class="xmb-col-name">Studio</span>
+    </div>
+
+    <div class="xmb-col" data-col="1" data-dist="1">
+      <button class="xmb-icon" aria-label="Upscaling">
+        <i class="fas fa-up-right-and-down-left-from-center"></i>
+        <div class="xmb-glow"></div>
+      </button>
+      <span class="xmb-col-name">Upscaling</span>
+    </div>
+
+    <div class="xmb-col" data-col="2" data-dist="2">
+      <button class="xmb-icon" aria-label="Convertir">
+        <i class="fas fa-arrows-rotate"></i>
+        <div class="xmb-glow"></div>
+      </button>
+      <span class="xmb-col-name">Convertir</span>
+    </div>
+
+    <div class="xmb-col" data-col="3" data-dist="3">
+      <button class="xmb-icon" aria-label="Seguridad">
+        <i class="fas fa-lock"></i>
+        <div class="xmb-glow"></div>
+      </button>
+      <span class="xmb-col-name">Seguridad</span>
+    </div>
+
+    <div class="xmb-col" data-col="4" data-dist="4">
+      <button class="xmb-icon" aria-label="Comprimir">
+        <i class="fas fa-file-zipper"></i>
+        <div class="xmb-glow"></div>
+      </button>
+      <span class="xmb-col-name">Comprimir</span>
+    </div>
+
+  </nav>
+
+  <!-- MENÚS VERTICALES — se deslizan bajo el ícono activo -->
+  <div class="xmb-menus" id="xmbMenus">
+
+    <ul class="xmb-menu" id="menu0">
+      <li class="xmb-item sel" data-action="open-file">
+        <i class="fas fa-folder-open"></i>Seleccionar Archivo
+      </li>
+      <li class="xmb-item" data-action="open-multi">
+        <i class="fas fa-folder-plus"></i>Seleccionar Múltiples
+      </li>
+      <li class="xmb-item" data-action="show-info">
+        <i class="fas fa-circle-info"></i>Información
+      </li>
+    </ul>
+
+    <ul class="xmb-menu hidden" id="menu1">
+      <li class="xmb-item sel" data-action="upscale-720">
+        <i class="fas fa-expand"></i>HD — 1280×720<span class="tag">720p</span>
+      </li>
+      <li class="xmb-item" data-action="upscale-1080">
+        <i class="fas fa-expand"></i>Full HD — 1920×1080<span class="tag">1080p</span>
+      </li>
+      <li class="xmb-item" data-action="upscale-1440">
+        <i class="fas fa-expand"></i>2K — 2560×1440<span class="tag">1440p</span>
+      </li>
+      <li class="xmb-item" data-action="upscale-4k">
+        <i class="fas fa-expand"></i>4K — 3840×2160<span class="tag ai">4K</span>
+      </li>
+      <li class="xmb-item" data-action="upscale-icon256">
+        <i class="fas fa-icons"></i>Ícono 256×256<span class="tag">ICO</span>
+      </li>
+      <li class="xmb-item" data-action="upscale-icon512">
+        <i class="fas fa-icons"></i>Ícono 512×512<span class="tag">ICO</span>
+      </li>
+      <li class="xmb-item" data-action="upscale-custom">
+        <i class="fas fa-sliders"></i>Dimensiones personalizadas…
+      </li>
+    </ul>
+
+    <ul class="xmb-menu hidden" id="menu2">
+      <li class="xmb-item sel" data-action="convert-ico-preview">
+        <i class="fas fa-border-all"></i>Exportar ICO<span class="tag ai">Multi-size</span>
+      </li>
+      <li class="xmb-item" data-action="convert-png">
+        <i class="fas fa-file-export"></i>Exportar PNG
+      </li>
+      <li class="xmb-item" data-action="convert-jpg">
+        <i class="fas fa-file-export"></i>Exportar JPG
+      </li>
+    </ul>
+
+    <ul class="xmb-menu hidden" id="menu3">
+      <li class="xmb-item sel" data-action="encrypt">
+        <i class="fas fa-lock"></i>Encriptar Archivo<span class="tag enc">AES-256</span>
+      </li>
+      <li class="xmb-item" data-action="decrypt">
+        <i class="fas fa-unlock"></i>Desencriptar Archivo
+      </li>
+    </ul>
+
+    <!-- ══ MENÚ COMPRIMIR ══ -->
+    <ul class="xmb-menu hidden" id="menu4">
+      <li class="xmb-item sel" data-action="zip-level-store">
+        <i class="fas fa-box-open"></i>Sin compresión
+      </li>
+      <li class="xmb-item" data-action="zip-level-fast">
+        <i class="fas fa-gauge-high"></i>Compresión rápida
+      </li>
+      <li class="xmb-item" data-action="zip-level-balanced">
+        <i class="fas fa-scale-balanced"></i>Balanceado
+      </li>
+      <li class="xmb-item" data-action="zip-level-max">
+        <i class="fas fa-compress"></i>Máxima compresión
+      </li>
+      <li class="xmb-item" data-action="zip-compress">
+        <i class="fas fa-file-zipper"></i>Comprimir a ZIP
+      </li>
+      <li class="xmb-item" data-action="zip-clear">
+        <i class="fas fa-trash"></i>Limpiar Lista
+      </li>
+    </ul>
+
+  </div>
+
+  <!-- STAGE / PANELES -->
+  <section class="xmb-stage">
+
+    <!-- Drop — panel derecho, solo modo multi -->
+    <div class="drop-float" id="panelDrop">
+      <div class="drop-multi hidden" id="dropMulti">
+        <div class="drop-multi-head">
+          <i class="fas fa-folder-plus"></i>
+          <span id="dropMultiCount">0 archivos seleccionados</span>
+          <button id="btnDropMultiAdd" title="Agregar más"><i class="fas fa-plus"></i></button>
+          <button id="btnDropMultiClear" title="Limpiar"><i class="fas fa-trash"></i></button>
+        </div>
+        <div class="drop-multi-list" id="dropMultiList"></div>
+        <div class="drop-multi-hint">
+          <i class="fas fa-arrow-left"></i>
+          Navega a la operación que quieres aplicar
+        </div>
+      </div>
+    </div>
+
+    <!-- Image Preview -->
+    <div class="panel panel-img hidden" id="panelImg">
+      <div class="panel-img-wrap">
+        <div class="checker"><img id="imgPreview" src="" alt="preview"></div>
+        <div class="img-meta-row" id="imgMeta">
+          <span><i class="fas fa-ruler-combined"></i><b id="metaDims">—</b></span>
+          <span class="msep">·</span>
+          <span><i class="fas fa-file"></i><b id="metaFmt">—</b></span>
+          <span class="msep">·</span>
+          <span><i class="fas fa-database"></i><b id="metaSize">—</b></span>
+          <button class="btn-img-clear" id="btnImgClose" title="Quitar"><i class="fas fa-xmark"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ICO Sizes Preview -->
+    <div class="panel panel-ico hidden" id="panelIco">
+      <div class="panel-box wide">
+        <div class="panel-head">
+          <span class="panel-label">ICO — SELECCIONA TAMAÑOS</span>
+          <button class="btn-close" id="btnIcoClose" title="Volver"><i class="fas fa-arrow-left"></i></button>
+        </div>
+        <div class="panel-body">
+          <div class="ico-grid" id="icoGrid"></div>
+          <button class="btn-primary" id="btnIcoExport" style="margin-top:8px">
+            <i class="fas fa-file-image"></i> Exportar ICO
+            <span id="icoExportLabel" style="font-size:10px;opacity:0.6;margin-left:4px"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="panel panel-info hidden" id="panelInfo">
+      <div class="panel-box">
+        <div class="panel-head">
+          <span class="panel-label">INFORMACIÓN DEL ARCHIVO</span>
+          <button class="btn-close" id="btnInfoClose" title="Volver"><i class="fas fa-arrow-left"></i></button>
+        </div>
+        <div class="panel-body">
+          <div class="info-rows" id="infoRows"></div>
+          <div class="size-section">
+            <p class="section-title">TAMAÑOS ICO A GENERAR</p>
+            <div class="chips" id="chipsContainer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upscale Custom -->
+    <div class="panel panel-upscale hidden" id="panelUpscale">
+      <div class="panel-box">
+        <div class="panel-head">
+          <span class="panel-label">UPSCALING CON IA — PERSONALIZADO</span>
+          <button class="btn-close" id="btnUpscaleClose" title="Volver"><i class="fas fa-arrow-left"></i></button>
+        </div>
+        <div class="panel-body">
+          <p class="panel-desc">Define las dimensiones exactas de salida.</p>
+          <div class="custom-inputs">
+            <div class="input-group">
+              <label>Ancho (px)</label>
+              <input type="number" id="customW" value="1920" min="64" max="7680">
+            </div>
+            <div class="input-sep">×</div>
+            <div class="input-group">
+              <label>Alto (px)</label>
+              <input type="number" id="customH" value="1080" min="64" max="7680">
+            </div>
+          </div>
+          <div class="upscale-info" id="upscaleInfo"></div>
+          <button class="btn-primary" id="btnUpscaleRun">
+            <i class="fas fa-wand-magic-sparkles"></i> Aplicar Upscaling con IA
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Security -->
+    <div class="panel panel-security hidden" id="panelSecurity">
+      <div class="panel-box">
+        <div class="panel-head">
+          <span class="panel-label" id="securityLabel">ENCRIPTAR ARCHIVO</span>
+          <button class="btn-close" id="btnSecurityClose" title="Volver"><i class="fas fa-arrow-left"></i></button>
+        </div>
+        <div class="panel-body">
+          <p class="panel-desc" id="securityDesc">Introduce la contraseña para encriptar el archivo.</p>
+          <div class="input-group full" style="margin-bottom:0">
+            <label>Contraseña</label>
+            <div class="password-wrap">
+              <input type="password" id="securityPass" placeholder="Escribe tu contraseña" autocomplete="off">
+              <button class="btn-eye" id="btnEye"><i class="fas fa-eye" id="eyeIcon"></i></button>
+            </div>
+          </div>
+          <div class="password-strength" id="passStrength"></div>
+          <button class="btn-primary" id="btnSecurityRun">
+            <i class="fas fa-lock" id="securityBtnIcon"></i>
+            <span id="securityBtnText">Encriptar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+
+
+
+
+  </section>
+</div>
+
+
+<script>
+/* ══════════════════════════════════════════════
+   AUDIO — Soft Click navegación XMB
+   vol:100%  spd:200%  pitch:125%
+   Definido primero para que esté disponible en todo el script
+══════════════════════════════════════════════ */
+const _xmbAudio = (() => {
+  let ctx = null;
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  return {
+    nav() {
+      try {
+        const ac = getCtx();
+        const o  = ac.createOscillator(), g = ac.createGain();
+        o.connect(g); g.connect(ac.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(750, ac.currentTime);
+        g.gain.setValueAtTime(0.15, ac.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.16);
+        o.start(); o.stop(ac.currentTime + 0.20);
+      } catch(e) {}
+    },
+    success() {
+      try {
+        const ac = getCtx();
+        [[800*0.70,0],[1200*0.70,0.12*1.30]].forEach(([freq,delay]) => {
+          const o = ac.createOscillator(), g = ac.createGain();
+          o.connect(g); g.connect(ac.destination);
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, ac.currentTime + delay);
+          g.gain.setValueAtTime(0, ac.currentTime + delay);
+          g.gain.linearRampToValueAtTime(0.28, ac.currentTime + delay + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + delay + 0.18*1.30);
+          o.start(ac.currentTime + delay);
+          o.stop(ac.currentTime + delay + 0.20*1.30);
+        });
+      } catch(e) {}
+    },
+    error() {
+      try {
+        const ac = getCtx();
+        [0, 0.10*1.50].forEach(delay => {
+          const o = ac.createOscillator(), g = ac.createGain();
+          o.connect(g); g.connect(ac.destination);
+          o.type = 'square';
+          o.frequency.setValueAtTime(240*0.75, ac.currentTime + delay);
+          g.gain.setValueAtTime(0.10, ac.currentTime + delay);
+          g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + delay + 0.09*1.50);
+          o.start(ac.currentTime + delay);
+          o.stop(ac.currentTime + delay + 0.11*1.50);
+        });
+      } catch(e) {}
+    }
+  };
+})();
+
+/* ══════════════════════════════════════════════
+   ESTADO GLOBAL
+══════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════
+   TAMBOR ELÍPTICO VERTICAL — igual que el revólver de íconos
+   
+   Centro de la elipse a la IZQUIERDA del contenedor.
+   El ítem seleccionado apunta a la DERECHA (0°).
+   Los anteriores curvan hacia arriba, los siguientes hacia abajo.
+   Mismo concepto que WHEEL_RX/WHEEL_RY pero en eje Y dominante.
+══════════════════════════════════════════════ */
+const ITEM_EX   = 30;   // radio X de la elipse de ítems (profundidad)
+const ITEM_EY   = 110;  // radio Y de la elipse de ítems (altura del arco)
+const ITEM_STEP = 42;   // grados entre ítems (mismo que STEP_DEG íconos)
+
+function updateItemDists(menu, selIdx) {
+  const items = [...menu.querySelectorAll('.xmb-item')];
+  const total  = items.length;
+
+  items.forEach((item, i) => {
+    // Distancia circular más corta — infinite scroll
+    let sd = i - selIdx;
+    if (sd >  Math.floor(total / 2)) sd -= total;
+    if (sd < -Math.floor(total / 2)) sd += total;
+
+    const dist = Math.abs(sd);
+    item.dataset.dist = dist;
+
+    // Ángulo en la elipse:
+    // sd=0  → 0°   → punto más a la DERECHA de la elipse (frente)
+    // sd=-1 → +42° → curva hacia ARRIBA
+    // sd=+1 → -42° → curva hacia ABAJO
+    const angleDeg = sd * ITEM_STEP;
+    const angleRad = angleDeg * Math.PI / 180;
+
+    // Posición elíptica — espejada respecto al revólver de íconos:
+    // x: el frente (0°) está en +ITEM_EX (más a la derecha = más visible)
+    // y: positivo = abajo en pantalla
+    const x = Math.cos(angleRad) * ITEM_EX;
+    const y = Math.sin(angleRad) * ITEM_EY;
+
+    // Escala y opacidad idénticas al revólver de íconos
+    const scales = [1.00, 0.72, 0.52, 0.36, 0.24];
+    const opaqs  = [1.00, 0.55, 0.28, 0.12, 0.04];
+    const scale  = scales[Math.min(dist, scales.length - 1)];
+    const opaq   = opaqs [Math.min(dist, opaqs.length  - 1)];
+
+    item.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    item.style.opacity   = opaq;
+    item.style.pointerEvents = dist <= 2 ? 'auto' : 'none';
+  });
+}
+let filePath         = null;
+let fileInfo         = null;
+let activeCol        = 0;
+let securityMode     = 'encrypt';
+let selectedIcoSizes = [16, 32, 48, 64, 128, 256];
+
+/* ZIP */
+let zipFiles       = [];   // Array de {name, path}
+let zipLevel       = 6;    // nivel de compresión actual
+
+/* MULTI-FILE — selección persistente entre columnas */
+let multiFiles     = [];   // [{name, path}]
+let multiScroll    = 0;    // Scroll actual en lista multi (XMB style)
+const TOTAL_COLS   = 5;
+const COL_W        = 88;   // px — debe coincidir con --col-w en CSS
+
+/* Etiquetas de nivel para el header del panel */
+const LEVEL_LABELS = {
+  0: 'NIVEL 0 · SIN COMPRESIÓN',
+  1: 'NIVEL 1 · MÍNIMA',
+  3: 'NIVEL 3 · RÁPIDA',
+  6: 'NIVEL 6 · BALANCEADO',
+  9: 'NIVEL 9 · MÁXIMA',
+};
+
+/* ══════════════════════════════════════════════
+   RELOJ — formato PS3 real: M/DD H:MM AM/PM
+══════════════════════════════════════════════ */
+function tick() {
+  const n   = new Date();
+  const mo  = n.getMonth() + 1;
+  const dd  = n.getDate();
+  let   hh  = n.getHours();
+  const mm  = String(n.getMinutes()).padStart(2,'0');
+  const ampm = hh >= 12 ? 'PM' : 'AM';
+  hh = hh % 12 || 12;
+  document.getElementById('xmbDate').textContent = `${mo}/${dd}`;
+  document.getElementById('xmbTime').textContent = `${hh}:${mm} ${ampm}`;
+}
+tick();
+setInterval(tick, 15000);
+
+/* ══════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════ */
+function toast(msg, type = 'info', dur = 4000) {
+  const c   = document.getElementById('toasts');
+  const t   = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  const ico = { success:'fa-circle-check', error:'fa-circle-xmark', warn:'fa-triangle-exclamation', info:'fa-circle-info' };
+  t.innerHTML = `<i class="fas ${ico[type] || ico.info}"></i><span>${msg}</span>`;
+  c.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, dur);
+  if (type === 'success') _xmbAudio.success();
+  else if (type === 'error') _xmbAudio.error();
+}
+
+/* ══════════════════════════════════════════════
+   LOADING — NO MODIFICADO
+══════════════════════════════════════════════ */
+function showLoad(msg, sub = '') {
+  document.getElementById('loadingMsg').textContent = msg;
+  document.getElementById('loadingSub').textContent = sub;
+  document.getElementById('overlayLoading').classList.add('show');
+}
+function hideLoad() {
+  document.getElementById('overlayLoading').classList.remove('show');
+}
+
+/* ══════════════════════════════════════════════
+   PANELES
+══════════════════════════════════════════════ */
+const PANELS = {
+  drop:     'panelDrop',
+  img:      'panelImg',
+  ico:      'panelIco',
+  info:     'panelInfo',
+  upscale:  'panelUpscale',
+  security: 'panelSecurity',
+};
+
+function showPanel(name) {
+  Object.values(PANELS).forEach(id => {
+    document.getElementById(id)?.classList.add('hidden');
+  });
+  document.getElementById(PANELS[name])?.classList.remove('hidden');
+}
+
+function backToImg() {
+  if (multiFiles.length > 0) { showPanel('drop'); return; }
+  showPanel(filePath ? 'img' : 'drop');
+}
+
+/* Botones cerrar / volver */
+document.getElementById('btnImgClose').onclick      = () => { filePath = null; fileInfo = null; showPanel('drop'); };
+document.getElementById('btnIcoClose').onclick       = backToImg;
+document.getElementById('btnInfoClose').onclick      = backToImg;
+document.getElementById('btnUpscaleClose').onclick   = backToImg;
+document.getElementById('btnSecurityClose').onclick  = backToImg;
+
+/* ══════════════════════════════════════════════
+   REVOLVER WHEEL — ELIPSE + INFINITE SCROLL
+   - Centro del arco: borde izquierdo, mitad vertical
+   - Elipse (ancha x alta) en vez de círculo
+   - Infinite scroll: los índices se tratan como módulo
+   - Título a la derecha alejado del ícono, no solapa menú
+══════════════════════════════════════════════ */
+const WHEEL_RX   = 115;   // radio horizontal de la elipse (px)
+const WHEEL_RY   = 200;   // radio vertical de la elipse (px) — más alto que ancho
+const STEP_DEG   = 40;    // grados entre ítems
+const TITLE_OFFSET_X = 220; // px desde el centro del arco al título — después del ícono
+
+// Cols virtuales para infinite scroll — siempre mostramos 5 slots
+// Cada slot corresponde a un ángulo fijo, los datos rotan
+const SLOTS = 5;  // cuántos íconos visibles
+
+// Lista de columnas ordenadas — se reordena según activeCol
+const COL_DATA = [
+  { col: 0, icon: 'fa-cubes',                         name: 'Studio'    },
+  { col: 1, icon: 'fa-up-right-and-down-left-from-center', name: 'Upscaling' },
+  { col: 2, icon: 'fa-arrows-rotate',                name: 'Convertir' },
+  { col: 3, icon: 'fa-lock',                         name: 'Seguridad' },
+  { col: 4, icon: 'fa-file-zipper',                  name: 'Comprimir' },
+];
+
+function activateCol(idx) {
+  activeCol = ((idx % TOTAL_COLS) + TOTAL_COLS) % TOTAL_COLS; // wrap circular
+  const cols = document.querySelectorAll('.xmb-col');
+
+  cols.forEach(col => {
+    const colIdx     = +col.dataset.col;
+    let signedDist = colIdx - activeCol;
+    if (signedDist >  Math.floor(TOTAL_COLS/2)) signedDist -= TOTAL_COLS;
+    if (signedDist < -Math.floor(TOTAL_COLS/2)) signedDist += TOTAL_COLS;
+
+    const dist = Math.abs(signedDist);
+    col.dataset.dist = dist;
+
+    const angleDeg = signedDist * STEP_DEG;
+    const angleRad = angleDeg * Math.PI / 180;
+
+    const x = Math.cos(angleRad) * WHEEL_RX;
+    const y = Math.sin(angleRad) * WHEEL_RY;
+
+    const scales = [1.00, 0.65, 0.46, 0.32, 0.22];
+    const opaqs  = [1.00, 0.55, 0.28, 0.14, 0.06];
+    const scale  = scales[Math.min(dist, scales.length - 1)];
+    const opaq   = opaqs [Math.min(dist, opaqs.length  - 1)];
+
+    col.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    col.style.opacity   = opaq;
+
+    const nameEl = col.querySelector('.xmb-col-name');
+    if (nameEl) {
+      if (dist === 0) {
+        nameEl.style.left = `${x + 38}px`;
+        nameEl.style.top  = `${y}px`;
+        nameEl.style.transform = 'translateY(-50%)';
+      } else {
+        nameEl.style.left = '0';
+        nameEl.style.top  = '0';
+      }
+    }
+  });
+
+  // Menú activo
+  for (let i = 0; i < TOTAL_COLS; i++) {
+    const menu = document.getElementById(`menu${i}`);
+    if (menu) {
+      const isCurrent = (i === activeCol);
+      menu.classList.toggle('hidden', !isCurrent);
+      if (isCurrent) {
+        const items = [...menu.querySelectorAll('.xmb-item')];
+        if (items.length > 0) {
+          const sel = menu.querySelector('.xmb-item.sel');
+          if (!sel) items[0].classList.add('sel');
+          const selIdx = items.findIndex(item => item.classList.contains('sel'));
+          updateItemDists(menu, selIdx >= 0 ? selIdx : 0);
+        }
+      }
+    }
+  }
+  document.getElementById('xmbMenus').style.transform = 'none';
+  backToImg();
+  _xmbAudio.nav();
+}
+document.querySelectorAll('.xmb-col').forEach(col => {
+  col.querySelector('.xmb-icon').addEventListener('click', () => {
+    activateCol(+col.dataset.col);
+  });
+  // También click en la columna completa
+  col.addEventListener('click', (e) => {
+    if (!e.target.closest('.xmb-icon')) return;
+    activateCol(+col.dataset.col);
+  });
+});
+
+/* ══════════════════════════════════════════════
+   CLICKS EN ÍTEMS DE MENÚ
+   Usar 'this' directamente, más fiable en Electron
+══════════════════════════════════════════════ */
+
+
+function bindMenuItems() {
+  document.querySelectorAll('.xmb-item').forEach(item => {
+    // Click: si ya está seleccionado → ejecutar; si no → solo seleccionar
+    item.onclick = function() {
+      const menu  = this.closest('.xmb-menu');
+      const items = [...menu.querySelectorAll('.xmb-item')];
+      const idx   = items.indexOf(this);
+      const wasSel = this.classList.contains('sel');
+
+      items.forEach(i => i.classList.remove('sel'));
+      this.classList.add('sel');
+      updateItemDists(menu, idx);
+      _xmbAudio.nav();
+
+      // Solo ejecutar si ya estaba seleccionado (segundo click) o es el único ítem
+      if (wasSel || items.length === 1) {
+        const action = this.dataset.action;
+        if (action) handleAction(action);
+      }
+    };
+  });
+}
+bindMenuItems();
+
+/* Inicializar dist=0 en el primer ítem de cada menú */
+document.querySelectorAll('.xmb-menu').forEach(menu => {
+  const items = menu.querySelectorAll('.xmb-item');
+  items.forEach((item, i) => { item.dataset.dist = i; });
+});
+
+/* Teclado ← → ↑ ↓ — infinite scroll circular */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft')  { activateCol(activeCol - 1); return; }
+  if (e.key === 'ArrowRight') { activateCol(activeCol + 1); return; }
+
+  // Navegación vertical dentro del menú activo
+  const menu = document.getElementById(`menu${activeCol}`);
+  if (!menu) return;
+  const items = Array.from(menu.querySelectorAll('.xmb-item'));
+  if (!items.length) return;
+
+  const curSel = menu.querySelector('.xmb-item.sel');
+  let curIdx   = curSel ? items.indexOf(curSel) : 0;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    curIdx = (curIdx + 1) % items.length;  // circular
+    items.forEach(i => i.classList.remove('sel'));
+    items[curIdx].classList.add('sel');
+    updateItemDists(menu, curIdx);
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    curIdx = (curIdx - 1 + items.length) % items.length;  // circular
+    items.forEach(i => i.classList.remove('sel'));
+    items[curIdx].classList.add('sel');
+    updateItemDists(menu, curIdx);
+  }
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    const sel = menu.querySelector('.xmb-item.sel');
+    if (sel && sel.dataset.action) handleAction(sel.dataset.action);
+  }
+});
+
+/* Inicializar en col 0 */
+activateCol(0);
+
+/* ══════════════════════════════════════════════
+   DRAG & DROP (imagen)
+══════════════════════════════════════════════ */
+const dropEl = document.getElementById('panelDrop');
+dropEl.addEventListener('dragover',  e => { e.preventDefault(); dropEl.classList.add('dragover'); });
+dropEl.addEventListener('dragleave', () => dropEl.classList.remove('dragover'));
+dropEl.addEventListener('drop', async e => {
+  e.preventDefault(); dropEl.classList.remove('dragover');
+  const f = e.dataTransfer.files[0];
+  if (f && /\.(png|jpe?g|webp|gif|bmp)$/i.test(f.name)) await loadFile(f.path);
+  else toast('Formato no soportado', 'error');
+});
+
+/* ══════════════════════════════════════════════
+   CARGAR ARCHIVO (imagen)
+══════════════════════════════════════════════ */
+async function loadFile(fp) {
+  showLoad('Cargando imagen…');
+  filePath = fp;
+  const info = await window.api.getImageInfo(fp);
+  hideLoad();
+
+  if (!info.success) {
+    toast('No se pudo leer la imagen: ' + info.error, 'error');
+    filePath = null;
+    return;
+  }
+
+  fileInfo = info;
+  showPanel('img');
+  document.getElementById('imgPreview').src = info.preview;
+  const kb = (info.size / 1024).toFixed(1);
+  document.getElementById('metaDims').textContent = `${info.width}×${info.height}px`;
+  document.getElementById('metaFmt').textContent  = info.format;
+  document.getElementById('metaSize').textContent = `${kb} KB`;
+  toast(`${fp.split(/[\\\/]/).pop()} cargado`, 'success');
+}
+
+/* ══════════════════════════════════════════════
+   ACCIONES
+══════════════════════════════════════════════ */
+async function handleAction(action) {
+
+  /* ─── COMPRIMIR ZIP — no requieren imagen ─── */
+  if (['zip-compress','zip-clear',
+       'zip-level-store','zip-level-fast','zip-level-balanced','zip-level-max'].includes(action)) {
+    handleZipAction(action);
+    return;
+  }
+
+  const needsFile = !['open-file', 'open-multi'].includes(action);
+  // Si hay archivos multi y la acción es upscale, no bloquear aunque no haya filePath
+  const upscaleActions = ['upscale-720','upscale-1080','upscale-1440','upscale-4k','upscale-icon256','upscale-icon512','upscale-custom'];
+  const hasMulti = multiFiles.length > 0;
+  if (needsFile && !filePath && !(hasMulti && upscaleActions.includes(action))) {
+    toast('Selecciona una imagen primero (Studio → Seleccionar Archivo)', 'warn');
+    return;
+  }
+
+  switch (action) {
+
+    /* ─── IMAGEN ─── */
+    case 'open-file': {
+      const fp = await window.api.openFile();
+      if (fp) await loadFile(fp);
+      break;
+    }
+    case 'open-multi': {
+      await openMultiSelect();
+      break;
+    }
+    case 'show-info': {
+      renderInfo();
+      showPanel('info');
+      break;
+    }
+
+    /* ─── UPSCALING ─── */
+    case 'upscale-720':     await runUpscale(1280, 720);  break;
+    case 'upscale-1080':    await runUpscale(1920, 1080); break;
+    case 'upscale-1440':    await runUpscale(2560, 1440); break;
+    case 'upscale-4k':      await runUpscale(3840, 2160); break;
+    case 'upscale-icon256': await runUpscale(256, 256);   break;
+    case 'upscale-icon512': await runUpscale(512, 512);   break;
+    case 'upscale-custom': {
+      updateUpscaleInfo();
+      showPanel('upscale');
+      break;
+    }
+
+    /* ─── CONVERTIR ─── */
+    case 'convert-ico-preview': {
+      // Primero mostrar preview para seleccionar tamaños, luego exportar
+      if (!filePath) { toast('Selecciona una imagen primero', 'warn'); break; }
+      showLoad('Generando previews ICO…');
+      const prev = await window.api.previewIcoSizes(filePath);
+      hideLoad();
+      if (prev.success) {
+        renderIcoGrid(prev.previews);
+        showPanel('ico');
+        // El botón de exportar en el panel ico dispara la conversión real
+      } else {
+        toast('Error generando preview: ' + prev.error, 'error');
+      }
+      break;
+    }
+    case 'convert-ico': {
+      // Conversión directa (llamado desde el panel ico tras seleccionar tamaños)
+      showLoad('Generando ICO multi-tamaño…', `Tamaños: ${selectedIcoSizes.join(', ')}px`);
+      const res = await window.api.convertImage({ filePath, format: 'ico', icoSizes: selectedIcoSizes });
+      hideLoad();
+      if (res.success) toast(`ICO guardado · ${(res.size/1024).toFixed(1)} KB · ${selectedIcoSizes.length} tamaños`, 'success', 5000);
+      else if (res.error) toast('Error: ' + res.error, 'error');
+      break;
+    }
+    case 'convert-png': {
+      showLoad('Exportando PNG…');
+      const res = await window.api.convertImage({ filePath, format: 'png' });
+      hideLoad();
+      if (res.success) toast('PNG exportado correctamente', 'success');
+      else if (res.error) toast('Error: ' + res.error, 'error');
+      break;
+    }
+    case 'convert-jpg': {
+      showLoad('Exportando JPG…');
+      const res = await window.api.convertImage({ filePath, format: 'jpg' });
+      hideLoad();
+      if (res.success) toast('JPG exportado correctamente', 'success');
+      else if (res.error) toast('Error: ' + res.error, 'error');
+      break;
+    }
+
+    /* ─── SEGURIDAD ─── */
+    case 'encrypt': {
+      securityMode = 'encrypt';
+      document.getElementById('securityLabel').textContent   = 'ENCRIPTAR ARCHIVO';
+      document.getElementById('securityDesc').textContent    = 'Introduce la contraseña para encriptar el archivo.';
+      document.getElementById('securityBtnIcon').className   = 'fas fa-lock';
+      document.getElementById('securityBtnText').textContent = 'Encriptar';
+      document.getElementById('securityPass').value = '';
+      updatePassStrength('');
+      showPanel('security');
+      break;
+    }
+    case 'decrypt': {
+      securityMode = 'decrypt';
+      document.getElementById('securityLabel').textContent   = 'DESENCRIPTAR ARCHIVO';
+      document.getElementById('securityDesc').textContent    = 'Introduce la contraseña con la que se encriptó el archivo.';
+      document.getElementById('securityBtnIcon').className   = 'fas fa-unlock';
+      document.getElementById('securityBtnText').textContent = 'Desencriptar';
+      document.getElementById('securityPass').value = '';
+      updatePassStrength('');
+      showPanel('security');
+      break;
+    }
+  }
+}
+
+/* ══════════════════════════════════════════════
+   UPSCALING
+══════════════════════════════════════════════ */
+async function runUpscale(w, h) {
+  showLoad('Upscaling con IA…', `${fileInfo?.width ?? '?'}×${fileInfo?.height ?? '?'} → ${w}×${h}`);
+  const res = await window.api.upscaleImage({ filePath, targetWidth: w, targetHeight: h });
+  hideLoad();
+  if (res && res.success) {
+    const kb = (res.fileSize / 1024).toFixed(1);
+    toast(`✓ Upscaling completado · ${res.width}×${res.height}px · ${kb} KB · ${res.time}s`, 'success', 5500);
+  } else {
+    toast(res?.error || 'Error desconocido', 'error', 7000);
+  }
+}
+
+document.getElementById('btnUpscaleRun').addEventListener('click', async () => {
+  const w = parseInt(document.getElementById('customW').value);
+  const h = parseInt(document.getElementById('customH').value);
+  if (!w || !h || w < 64 || h < 64) { toast('Dimensiones inválidas (mínimo 64px)', 'warn'); return; }
+
+  // Modo batch — si hay archivos en la bandeja
+  if (multiFiles.length > 0) {
+    const outputDir = await window.api.openFolder();
+    if (!outputDir) return;
+
+    const files = multiFiles.map(f => f.path);
+    const total = files.length;
+
+    backToImg();
+    showLoad(`Upscaling ${w}×${h} — 0/${total}`, 'Preparando…');
+
+    window.api.offBatchProgress();
+    window.api.onBatchProgress(({ current, total: t, file }) => {
+      document.getElementById('loadingMsg').textContent = `Upscaling ${w}×${h} — ${current}/${t}`;
+      document.getElementById('loadingSub').textContent = file;
+    });
+
+    const res = await window.api.batchUpscale({ files, targetWidth: w, targetHeight: h, outputDir });
+    window.api.offBatchProgress();
+    hideLoad();
+
+    if (res?.success) {
+      const ok  = res.results.filter(r => r.success).length;
+      const err = res.results.filter(r => !r.success).length;
+      if (err === 0) toast(`✓ ${ok} imagen(es) guardadas en ${outputDir}`, 'success', 6000);
+      else           toast(`${ok} OK · ${err} con error`, 'warn', 5000);
+      multiFiles = [];
+      updateMultiTray();
+    } else {
+      toast(res?.error || 'Error en batch upscale', 'error', 7000);
+    }
+    return;
+  }
+
+  // Modo single — imagen única cargada
+  backToImg();
+  await runUpscale(w, h);
+});
+
+function updateUpscaleInfo() {
+  const el = document.getElementById('upscaleInfo');
+  if (!el || !fileInfo) return;
+  el.innerHTML = `<i class="fas fa-image"></i> Imagen actual: <b>${fileInfo.width}×${fileInfo.height}px</b>`;
+}
+
+/* ══════════════════════════════════════════════
+   SEGURIDAD
+══════════════════════════════════════════════ */
+document.getElementById('btnEye').addEventListener('click', () => {
+  const inp  = document.getElementById('securityPass');
+  const icon = document.getElementById('eyeIcon');
+  const show = inp.type === 'password';
+  inp.type       = show ? 'text' : 'password';
+  icon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+});
+
+document.getElementById('securityPass').addEventListener('input', e => updatePassStrength(e.target.value));
+
+function updatePassStrength(pass) {
+  const el = document.getElementById('passStrength');
+  if (!pass) { el.innerHTML = ''; return; }
+  let score = 0;
+  if (pass.length >= 8)           score++;
+  if (pass.length >= 12)          score++;
+  if (/[A-Z]/.test(pass))        score++;
+  if (/[0-9]/.test(pass))        score++;
+  if (/[^A-Za-z0-9]/.test(pass)) score++;
+  const labels = ['','Muy débil','Débil','Media','Fuerte','Muy fuerte'];
+  const colors = ['','#e05555','#e08855','#d4c040','#88cc55','#55cc88'];
+  const pct    = (score / 5) * 100;
+  el.innerHTML = `
+    <div class="strength-bar"><div class="strength-fill" style="width:${pct}%;background:${colors[score]}"></div></div>
+    <span style="color:${colors[score]};font-family:var(--mono);font-size:10px;letter-spacing:.8px">${labels[score]}</span>
+  `;
+}
+
+document.getElementById('btnSecurityRun').addEventListener('click', async () => {
+  const pass = document.getElementById('securityPass').value;
+  if (!pass) { toast('Escribe una contraseña primero', 'warn'); return; }
+  showLoad(securityMode === 'encrypt' ? 'Encriptando…' : 'Desencriptando…', 'AES-256-GCM');
+  const res = securityMode === 'encrypt'
+    ? await window.api.encryptFile({ filePath, password: pass })
+    : await window.api.decryptFile({ filePath, password: pass });
+  hideLoad();
+  if (res && res.success) {
+    toast(securityMode === 'encrypt' ? '🔒 Archivo encriptado' : '🔓 Archivo desencriptado', 'success');
+    document.getElementById('securityPass').value = '';
+    updatePassStrength('');
+    backToImg();
+  } else if (res?.error) {
+    toast('Error: ' + res.error, 'error', 6000);
+  }
+});
+
+/* ══════════════════════════════════════════════
+   INFO PANEL
+══════════════════════════════════════════════ */
+function renderInfo() {
+  const fname = filePath?.split(/[\\\/]/).pop() ?? '—';
+  const rows = [
+    ['Archivo',     fname],
+    ['Ruta',        filePath ?? '—'],
+    ['Formato',     fileInfo?.format ?? '—'],
+    ['Dimensiones', fileInfo ? `${fileInfo.width} × ${fileInfo.height} px` : '—'],
+    ['Tamaño',      fileInfo ? `${(fileInfo.size/1024).toFixed(2)} KB` : '—'],
+  ];
+  document.getElementById('infoRows').innerHTML = rows.map(([k,v]) =>
+    `<div class="info-row"><span class="ik">${k}</span><span class="iv">${v}</span></div>`
+  ).join('');
+  renderChips();
+}
+
+function renderChips() {
+  const c = document.getElementById('chipsContainer');
+  if (!c) return;
+  c.innerHTML = '';
+  [16, 32, 48, 64, 128, 256].forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'chip' + (selectedIcoSizes.includes(s) ? ' on' : '');
+    btn.textContent = `${s}px`;
+    btn.onclick = () => {
+      if (selectedIcoSizes.includes(s)) {
+        if (selectedIcoSizes.length === 1) return;
+        selectedIcoSizes = selectedIcoSizes.filter(x => x !== s);
+      } else {
+        selectedIcoSizes = [...selectedIcoSizes, s].sort((a,b) => a-b);
+      }
+      btn.classList.toggle('on', selectedIcoSizes.includes(s));
+    };
+    c.appendChild(btn);
+  });
+}
+
+/* ══════════════════════════════════════════════
+   ICO GRID
+══════════════════════════════════════════════ */
+function renderIcoGrid(previews) {
+  const grid = document.getElementById('icoGrid');
+  grid.innerHTML = '';
+  previews.forEach(({ size, preview }) => {
+    const on   = selectedIcoSizes.includes(size);
+    const cell = document.createElement('div');
+    cell.className = 'ico-cell' + (on ? ' on' : '');
+    cell.innerHTML = `
+      <div class="ico-checker"><img src="${preview}" width="${Math.max(size,32)}" height="${Math.max(size,32)}"></div>
+      <span class="ico-sz">${size}×${size}</span>
+      <span class="ico-st ${on?'inc':'exc'}">${on?'INCLUIDO':'EXCLUIDO'}</span>
+    `;
+    cell.addEventListener('click', () => {
+      if (selectedIcoSizes.includes(size)) {
+        if (selectedIcoSizes.length === 1) return;
+        selectedIcoSizes = selectedIcoSizes.filter(x => x !== size);
+      } else {
+        selectedIcoSizes = [...selectedIcoSizes, size].sort((a,b) => a-b);
+      }
+      const active = selectedIcoSizes.includes(size);
+      cell.classList.toggle('on', active);
+      cell.querySelector('.ico-st').textContent = active ? 'INCLUIDO' : 'EXCLUIDO';
+      cell.querySelector('.ico-st').className   = `ico-st ${active ? 'inc' : 'exc'}`;
+    });
+    grid.appendChild(cell);
+  });
+}
+
+/* ══════════════════════════════════════════════
+   ZIP — COMPRESOR
+   FIX: niveles de compresión desde menú XMB Y desde botones del panel.
+   FIX: showPanel('zip') en todas las acciones de ZIP para que el panel
+        aparezca si se accede desde el menú lateral directamente.
+══════════════════════════════════════════════ */
+
+/* Actualizar el label de nivel en el panel header */
+function updateZipLevelUI() {
+  const labelEl = document.getElementById('zipLevelLabel');
+  if (labelEl) labelEl.textContent = LEVEL_LABELS[zipLevel] || `NIVEL ${zipLevel}`;
+
+  // Sincronizar botones del panel
+  document.querySelectorAll('.level-btn').forEach(b => {
+    b.classList.toggle('active', +b.dataset.level === zipLevel);
+  });
+}
+
+function handleZipAction(action) {
+  switch(action) {
+    case 'zip-compress':
+      runZipCompress();
+      break;
+    case 'zip-clear':
+      zipFiles = [];
+      renderZipList();
+      clearZipStats();
+      toast('Lista limpiada', 'info');
+      break;
+
+    /* Cambios de nivel desde el menú XMB */
+    case 'zip-level-store':
+      zipLevel = 0;
+      updateZipLevelUI();
+      toast('Nivel 0 — Sin compresión', 'info', 2000);
+      break;
+    case 'zip-level-fast':
+      zipLevel = 3;
+      updateZipLevelUI();
+      toast('Nivel 3 — Compresión rápida', 'info', 2000);
+      break;
+    case 'zip-level-balanced':
+      zipLevel = 6;
+      updateZipLevelUI();
+      toast('Nivel 6 — Balanceado', 'info', 2000);
+      break;
+    case 'zip-level-max':
+      zipLevel = 9;
+      updateZipLevelUI();
+      toast('Nivel 9 — Máxima compresión', 'info', 2000);
+      break;
+  }
+}
+
+async function addZipFiles() {
+  const paths = await window.api.selectFilesForZip();
+  if (!paths || !paths.length) return;
+  let added = 0;
+  paths.forEach(fp => {
+    const name = fp.split(/[\\\/]/).pop();
+    if (!zipFiles.find(z => z.path === fp)) {
+      zipFiles.push({ name, path: fp });
+      added++;
+    }
+  });
+  renderZipList();
+  if (added > 0) toast(`${added} archivo(s) agregado(s)`, 'success');
+}
+
+/* Botones inline del panel ZIP — con optional chaining por si el panel no existe */
+document.getElementById('btnZipAddInline')?.addEventListener('click',   addZipFiles);
+document.getElementById('btnZipClearInline')?.addEventListener('click', () => {
+  zipFiles = [];
+  renderZipList();
+  clearZipStats();
+  toast('Lista limpiada', 'info');
+});
+
+/* Niveles de compresión — botones del panel */
+document.getElementById('levelBtns')?.addEventListener('click', e => {
+  const btn = e.target.closest('.level-btn');
+  if (!btn) return;
+  zipLevel = +btn.dataset.level;
+  updateZipLevelUI();
+});
+
+function clearZipStats() {
+  const s = document.getElementById('zipStats');
+  if (s) { s.style.display = 'none'; s.innerHTML = ''; }
+}
+
+function showZipStats(res) {
+  const s = document.getElementById('zipStats');
+  if (!s || !res) return;
+  const origKB  = (res.originalSize / 1024).toFixed(1);
+  const outKB   = (res.size / 1024).toFixed(1);
+  const ratio   = res.ratio || 0;
+  const rClass  = ratio >= 20 ? 'ratio-good' : ratio >= 5 ? 'ratio-ok' : '';
+  s.style.display = 'flex';
+  s.innerHTML = `
+    ORIGINAL <span>${origKB} KB</span>
+    ZIP <span>${outKB} KB</span>
+    RATIO <span class="${rClass}">${ratio}% menos</span>
+  `;
+}
+
+function renderZipList() {
+  const list  = document.getElementById('zipFileList');
+  const empty = document.getElementById('zipEmpty');
+  if (!list) return;
+  list.querySelectorAll('.zip-file-item').forEach(el => el.remove());
+  if (zipFiles.length === 0) {
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  zipFiles.forEach((f, idx) => {
+    const item = document.createElement('div');
+    item.className = 'zip-file-item';
+    const ext = f.name.split('.').pop().toLowerCase();
+    const ico = ext === 'png' || ext === 'jpg' || ext === 'jpeg' ? 'fa-image'
+              : ext === 'zip' ? 'fa-file-zipper'
+              : 'fa-file';
+    item.innerHTML = `
+      <i class="fas ${ico}"></i>
+      <span class="zip-fname" title="${f.path}">${f.name}</span>
+      <button class="zip-remove" title="Quitar">
+        <i class="fas fa-xmark"></i>
+      </button>
+    `;
+    item.querySelector('.zip-remove').addEventListener('click', (e) => {
+      e.stopPropagation();
+      zipFiles.splice(idx, 1);
+      renderZipList();
+    });
+    list.appendChild(item);
+  });
+}
+
+async function runZipCompress() {
+  // Prioridad: multiFiles > filePath > zipFiles (legacy)
+  let filesToZip = [];
+  if (multiFiles.length > 0) {
+    filesToZip = multiFiles.map(f => f.path);
+  } else if (filePath) {
+    filesToZip = [filePath];
+  } else if (zipFiles.length > 0) {
+    filesToZip = zipFiles.map(f => f.path);
+  }
+
+  if (filesToZip.length === 0) {
+    toast('Selecciona archivos desde Studio primero', 'warn');
+    return;
+  }
+  showLoad('Comprimiendo…', `${filesToZip.length} archivo(s) · nivel ${zipLevel}`);
+  try {
+    const res = await window.api.compressZip({
+      files: filesToZip,
+      level: zipLevel
+    });
+    hideLoad();
+    if (res && res.success) {
+      showZipStats(res);
+      toast(`ZIP guardado · ${(res.size / 1024).toFixed(1)} KB`, 'success', 5000);
+      if (multiFiles.length > 0) {
+        multiFiles = [];
+        updateMultiTray();
+      }
+    } else {
+      toast('Error: ' + (res?.error || 'desconocido'), 'error');
+    }
+  } catch (err) {
+    hideLoad();
+    toast('Error al comprimir: ' + err.message, 'error');
+  }
+}
+
+/* Botón comprimir del panel */
+document.getElementById('btnZipRun')?.addEventListener('click', runZipCompress);
+
+/* Inicializar UI de nivel */
+updateZipLevelUI();
+
+/* ══════════════════════════════════════════════
+   BOTÓN EXPORTAR ICO — en el panel de preview
+══════════════════════════════════════════════ */
+document.getElementById('btnIcoClose').addEventListener('click', () => {
+  showPanel(filePath ? 'img' : 'drop');
+});
+
+document.getElementById('btnIcoExport').addEventListener('click', async () => {
+  if (!filePath) { toast('Sin imagen cargada', 'warn'); return; }
+  document.getElementById('icoExportLabel').textContent = `(${selectedIcoSizes.join(', ')}px)`;
+  await handleAction('convert-ico');
+});
+
+/* ══════════════════════════════════════════════
+   SCROLL DEL MOUSE
+   - Sobre el menú → navega entre ítems
+   - Fuera del menú → cambia columna
+══════════════════════════════════════════════ */
+let scrollCooldown = false;
+
+/* ══════════════════════════════════════════════
+   ZONAS DE SCROLL — basadas en coordenadas X del cursor
+   No usamos e.target porque los ítems tienen height:0
+   en el contenedor y el hit-test falla.
+
+   Zona A: cursor sobre los ÍCONOS (x < 180px)
+     → cambiar columna
+
+   Zona B: cursor sobre las OPCIONES (x entre 180 y 510px)
+     → navegar entre ítems del menú
+
+   Zona C: cursor sobre el PANEL DERECHO (x > 510px)
+     → no hacer nada (panel scrollea solo)
+══════════════════════════════════════════════ */
+const ZONE_ICONS_END  = 180;  // px — fin de la zona de íconos
+const ZONE_MENU_END   = 510;  // px — fin de la zona de menú
+
+function scrollMenuItems(dir) {
+  const menu = document.getElementById(`menu${activeCol}`);
+  if (!menu) return;
+  const items  = [...menu.querySelectorAll('.xmb-item')];
+  if (!items.length) return;
+  const curSel = menu.querySelector('.xmb-item.sel');
+  let   curIdx = curSel ? items.indexOf(curSel) : 0;
+
+  curIdx = dir > 0
+    ? (curIdx + 1) % items.length
+    : (curIdx - 1 + items.length) % items.length;
+
+  items.forEach(i => i.classList.remove('sel'));
+  items[curIdx].classList.add('sel');
+  updateItemDists(menu, curIdx);
+  _xmbAudio.nav();
+}
+
+document.addEventListener('wheel', e => {
+  if (scrollCooldown) return;
+  scrollCooldown = true;
+  setTimeout(() => scrollCooldown = false, 220);
+
+  const cx = e.clientX;
+  const dir = e.deltaY > 0 ? 1 : -1;
+
+  if (cx > ZONE_MENU_END) {
+    // Zona panel derecho — no intervenir
+    const multiVis = !document.getElementById('dropMulti')?.classList.contains('hidden');
+    if (multiVis) {
+      multiScroll = Math.max(0, Math.min(multiScroll + dir, multiFiles.length - 1));
+      renderMultiList();
+    }
+    return;
+  } else if (cx >= ZONE_ICONS_END) {
+    // Zona opciones → navegar ítems
+    scrollMenuItems(dir);
+  } else {
+    // Zona íconos → cambiar columna
+    activateCol(activeCol + dir);
+  }
+}, { passive: true });
+
+/* ══════════════════════════════════════════════
+   MULTI-FILE — selección persistente entre columnas
+   Flujo:
+     1. Imagen → Seleccionar Múltiples → abre diálogo
+     2. Los archivos aparecen en la bandeja inferior
+     3. Navegas a Upscaling / Convertir / Seguridad / Comprimir
+     4. Al ejecutar la acción, procesa TODOS los archivos de la bandeja
+     5. Al terminar, esa operación elimina los archivos del tray
+══════════════════════════════════════════════ */
+// multiFiles declarado arriba en estado global
+
+function renderMultiList() {
+  const list = document.getElementById('dropMultiList');
+  if (!list) return;
+
+  const total  = multiFiles.length;
+  const EX     = 55;   // apertura horizontal — activo x=0, extremos a la izquierda
+  const EY     = 44;   // separación vertical entre ítems
+  const STEP   = 42;   // grados entre ítems (igual que ITEM_STEP del XMB)
+  const scales = [1.00, 0.72, 0.52, 0.36, 0.24];
+  const opaqs  = [1.00, 0.55, 0.28, 0.12, 0.04];
+
+  // Reutilizar elementos DOM existentes → transición CSS fluida (no borrar y recrear)
+  const existingMap = new Map();
+  list.querySelectorAll('.drop-multi-item').forEach(el => {
+    existingMap.set(Number(el.dataset.fileIdx), el);
+  });
+  const usedEls = new Set();
+
+  multiFiles.forEach((f, idx) => {
+    // Distancia circular con wrap — infinite scroll igual al XMB
+    let sd = idx - multiScroll;
+    if (sd >  Math.floor(total / 2)) sd -= total;
+    if (sd < -Math.floor(total / 2)) sd += total;
+    const dist     = Math.abs(sd);
+    const angleRad = sd * STEP * Math.PI / 180;
+
+    // Espejo del XMB: activo en x=0, extremos abren a la IZQUIERDA (negativo)
+    const x = -(1 - Math.cos(angleRad)) * EX;
+    const y =  Math.sin(angleRad) * EY;
+
+    const scale = scales[Math.min(dist, scales.length - 1)];
+    const opaq  = opaqs [Math.min(dist, opaqs.length  - 1)];
+
+    let item = existingMap.get(idx);
+    if (!item) {
+      const ext  = f.name.split('.').pop().toLowerCase();
+      const icon = ['png','jpg','jpeg','webp','gif','bmp'].includes(ext)
+        ? 'fa-image' : 'fa-file';
+      item = document.createElement('div');
+      item.className       = 'drop-multi-item';
+      item.dataset.fileIdx = idx;
+      item.innerHTML = `
+        <i class="fas ${icon} dm-icon"></i>
+        <span class="dm-name" title="${f.path}">${f.name}</span>
+        <button class="dm-remove" title="Quitar"><i class="fas fa-xmark"></i></button>
+      `;
+      item.querySelector('.dm-remove').onclick = (e) => {
+        e.stopPropagation();
+        const fi = multiFiles.indexOf(f);
+        if (fi !== -1) multiFiles.splice(fi, 1);
+        if (multiFiles.length === 0 && activeCol === 0) showPanel('drop');
+        multiScroll = Math.max(0, Math.min(multiScroll, multiFiles.length - 1));
+        updateMultiTray();
+      };
+      list.appendChild(item);
+    }
+    usedEls.add(item);
+
+    // JS controla transform y opacity — CSS solo maneja colores por data-dist
+    item.dataset.dist    = String(Math.min(dist, 9));
+    item.style.transform = `translateY(calc(-50% + ${y}px)) translateX(${x}px) scale(${scale})`;
+    item.style.opacity   = opaq;
+    item.style.pointerEvents = dist <= 2 ? 'auto' : 'none';
+  });
+
+  // Eliminar divs que ya no corresponden a ningún archivo
+  existingMap.forEach((el) => { if (!usedEls.has(el)) el.remove(); });
+}
+
+function updateMultiTray() {
+  const badge     = document.getElementById('multiBadge');
+  const dropMulti = document.getElementById('dropMulti');
+  const countEl   = document.getElementById('dropMultiCount');
+
+  if (badge) {
+    badge.textContent = multiFiles.length || '';
+    badge.classList.toggle('visible', multiFiles.length > 0);
+  }
+
+  if (multiFiles.length === 0) {
+    dropMulti?.classList.add('hidden');
+    return;
+  }
+
+  dropMulti?.classList.remove('hidden');
+  if (countEl) countEl.textContent = `${multiFiles.length} archivo(s) seleccionado(s)`;
+  renderMultiList();
+}
+
+// Botones del panel drop-multi
+document.getElementById('btnDropMultiClear')?.addEventListener('click', () => {
+  multiFiles = [];
+  updateMultiTray();
+  showPanel('drop');
+});
+document.getElementById('btnDropMultiAdd')?.addEventListener('click', async () => {
+  await openMultiSelect();
+});
+
+// Abrir selección múltiple
+async function openMultiSelect() {
+  const paths = await window.api.selectFilesForZip();
+  if (!paths || !paths.length) return;
+  let added = 0;
+  paths.forEach(fp => {
+    const name = fp.split(/[\\/]/).pop();
+    if (!multiFiles.find(f => f.path === fp)) {
+      multiFiles.push({ name, path: fp });
+      added++;
+    }
+  });
+  updateMultiTray();
+  if (added) toast(`${added} archivo(s) agregado(s) a la selección`, 'success');
+}
+
+// Procesar la bandeja con una operación dada
+async function processMultiFiles(opFn, opLabel) {
+  if (!multiFiles.length) return false;
+
+  const total   = multiFiles.length;
+  let done = 0, errors = 0;
+
+  showLoad(`${opLabel} — 0/${total}`, 'Procesando archivos…');
+
+  for (const f of [...multiFiles]) {
+    document.getElementById('loadingMsg').textContent = `${opLabel} — ${done+1}/${total}`;
+    document.getElementById('loadingSub').textContent = f.name;
+    try {
+      const res = await opFn(f.path);
+      if (res && res.success) { done++; multiFiles.splice(multiFiles.indexOf(f), 1); }
+      else errors++;
+    } catch { errors++; }
+  }
+
+  hideLoad();
+  updateMultiTray();
+
+  if (errors === 0) toast(`✓ ${done} archivo(s) procesados`, 'success', 4000);
+  else              toast(`${done} OK · ${errors} con error`, 'warn', 5000);
+  return true;
+}
+
+// Hook en handleAction para interceptar acciones cuando hay multi-selección
+const _origHandleAction = handleAction;
+handleAction = async function(action) {
+  if (multiFiles.length > 0) {
+
+    // ── Upscale en lote: pide carpeta UNA sola vez ──
+    const upscaleDims = {
+      'upscale-720':     [1280,  720],
+      'upscale-1080':    [1920, 1080],
+      'upscale-1440':    [2560, 1440],
+      'upscale-4k':      [3840, 2160],
+      'upscale-icon256': [256,   256],
+      'upscale-icon512': [512,   512],
+    };
+
+    if (action in upscaleDims) {
+      const [w, h] = upscaleDims[action];
+
+      const outputDir = await window.api.openFolder();
+      if (!outputDir) return;
+
+      const files = multiFiles.map(f => f.path);
+      const total = files.length;
+
+      showLoad(`Upscaling ${w}×${h} — 0/${total}`, 'Preparando…');
+
+      window.api.offBatchProgress();
+      window.api.onBatchProgress(({ current, total: t, file }) => {
+        document.getElementById('loadingMsg').textContent = `Upscaling ${w}×${h} — ${current}/${t}`;
+        document.getElementById('loadingSub').textContent = file;
+      });
+
+      const res = await window.api.batchUpscale({ files, targetWidth: w, targetHeight: h, outputDir });
+      window.api.offBatchProgress();
+      hideLoad();
+
+      if (res?.success) {
+        const ok  = res.results.filter(r => r.success).length;
+        const err = res.results.filter(r => !r.success).length;
+        if (err === 0) toast(`✓ ${ok} imagen(es) guardadas en ${outputDir}`, 'success', 6000);
+        else           toast(`${ok} OK · ${err} con error`, 'warn', 5000);
+        multiFiles = [];
+        updateMultiTray();
+      } else {
+        toast(res?.error || 'Error en batch upscale', 'error', 7000);
+      }
+      return;
+    }
+
+    // Resto de operaciones multi
+    const multiOps = {
+      'convert-png':  (fp) => window.api.convertImage({filePath:fp, format:'png'}),
+      'convert-jpg':  (fp) => window.api.convertImage({filePath:fp, format:'jpg'}),
+      'convert-ico':  (fp) => window.api.convertImage({filePath:fp, format:'ico', icoSizes:selectedIcoSizes}),
+      'encrypt':      (fp) => {
+        const pass = document.getElementById('securityPass').value;
+        return pass ? window.api.encryptFile({filePath:fp, password:pass}) : {success:false,error:'Sin contraseña'};
+      },
+      'decrypt':      (fp) => {
+        const pass = document.getElementById('securityPass').value;
+        return pass ? window.api.decryptFile({filePath:fp, password:pass}) : {success:false,error:'Sin contraseña'};
+      },
+      'zip-compress': null,
+    };
+
+    if (action in multiOps) {
+      if (action === 'zip-compress') {
+        zipFiles = [...multiFiles];
+        runZipCompress();
+        multiFiles = [];
+        updateMultiTray();
+        return;
+      }
+      const labels = {
+        'convert-png':'Convirtiendo PNG','convert-jpg':'Convirtiendo JPG',
+        'convert-ico':'Convirtiendo ICO','encrypt':'Encriptando','decrypt':'Desencriptando',
+      };
+      await processMultiFiles(multiOps[action], labels[action] || action);
+      return;
+    }
+  }
+
+  return _origHandleAction(action);
+};
+
+/* Inicializar bandeja */
+updateMultiTray();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "name": "ico-converter-xmb",
+  "version": "3.0.0",
+  "description": "Convertidor ICO multi-size con upscaling IA, encriptación AES-256 y UI XMB PS3",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --dir"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "electron": "^34.0.0"
+  },
+  "build": {
+    "appId": "com.icoconverter.xmb",
+    "productName": "ICO Converter XMB",
+    "files": ["main.js","preload.js","index_V5.html","style_v5.css","upscaler.py","models/**","assets/**",".env","node_modules/**"]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
