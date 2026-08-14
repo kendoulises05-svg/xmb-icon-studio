@@ -100,6 +100,22 @@ O usa el archivo `run_app.bat` incluido para iniciar rápidamente en Windows.
 
 ---
 
+## 🔐 Formato de archivos `.enc`
+
+Los archivos generados por **Seguridad → Encriptar** usan AES-256-GCM. Desde la versión con formato **V2**, la estructura en disco es:
+
+```
+"XMBE" (4 bytes, magic) | 0x02 (1 byte, versión) | SALT (16 bytes) | IV (12 bytes) | TAG (16 bytes) | CIPHERTEXT
+```
+
+La clave se deriva de la contraseña con **scrypt** (`N=2^15, r=8, p=1`, salt aleatoria de 16 bytes por archivo), no directamente de la contraseña en texto plano.
+
+**Compatibilidad hacia atrás:** los archivos `.enc` generados antes de este cambio (formato **V1**, sin los 5 bytes de magic/versión al inicio: `IV(12) | TAG(16) | CIPHERTEXT`) se siguen pudiendo desencriptar sin ninguna acción del usuario. `main.js` detecta el formato por la presencia del header V2 y usa la ruta correspondiente automáticamente.
+
+⚠️ **Importante:** los archivos V1 se cifraron con un KDF débil (SHA-256 de la contraseña, sin salt ni iteraciones), vulnerable a fuerza bruta offline. Si tienes archivos `.enc` antiguos con datos sensibles, se recomienda desencriptarlos y volver a encriptarlos para que queden protegidos con el nuevo formato V2.
+
+---
+
 ## 📁 Estructura del proyecto
 
 ```
