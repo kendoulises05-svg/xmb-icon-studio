@@ -63,30 +63,7 @@ const PYTHON_CMD = getPythonCmd();
 /* ─────────────────────────────────────
    CRYPTO
 ───────────────────────────────────── */
-const algorithm = "aes-256-gcm";
-function makeKey(password) { return crypto.createHash("sha256").update(password).digest(); }
-
-function encryptFile(inputPath, outputPath, password) {
-  const key = makeKey(password);
-  const iv = crypto.randomBytes(12);
-  const data = fs.readFileSync(inputPath);
-  const cipher = crypto.createCipheriv(algorithm, key, iv);
-  const encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  fs.writeFileSync(outputPath, Buffer.concat([iv, tag, encrypted]));
-}
-
-function decryptFile(inputPath, outputPath, password) {
-  const key = makeKey(password);
-  const data = fs.readFileSync(inputPath);
-  const iv = data.slice(0, 12);
-  const tag = data.slice(12, 28);
-  const encrypted = data.slice(28);
-  const decipher = crypto.createDecipheriv(algorithm, key, iv);
-  decipher.setAuthTag(tag);
-  const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
-  fs.writeFileSync(outputPath, decrypted);
-}
+const { deriveKey, makeKeyLegacy, encryptFile, decryptFile, ENC_MAGIC, ENC_VERSION } = require("./crypto-utils");
 
 /* ─────────────────────────────────────
    ZIP NATIVO (sin dependencias externas)
@@ -471,7 +448,7 @@ ipcMain.handle("compress-zip", async (_, { files, password }) => {
 
     // Si hay contraseña, encriptar el ZIP con AES-256
     if (password?.trim()) {
-      const key = makeKey(password);
+      const key = makeKeyLegacy(password);
       const iv = crypto.randomBytes(12);
       const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
       const encrypted = Buffer.concat([cipher.update(zipBuffer), cipher.final()]);
