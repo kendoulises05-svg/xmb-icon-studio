@@ -3,9 +3,11 @@
   "version": "3.0.0",
   "description": "Convertidor ICO multi-size con upscaling IA, encriptación AES-256 y UI XMB PS3",
   "main": "main.js",
+  "desktopName": "ico-converter-xmb.desktop",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --dir"
+    "build": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
@@ -13,12 +15,39 @@
     "sharp": "^0.34.5"
   },
   "devDependencies": {
-    "electron": "^34.0.0"
+    "electron": "^34.0.0",
+    "electron-builder": "^26.15.3"
   },
   "build": {
     "appId": "com.icoconverter.xmb",
     "productName": "ICO Converter XMB",
-    "files": ["main.js","preload.js","index_V5.html","style_v5.css","upscaler.py","models/**","assets/**",".env","node_modules/**"]
+    "files": [
+      "main.js",
+      "preload.js",
+      "crypto-utils.js",
+      "index_V7.html",
+      "style_V7.css",
+      "upscaler.py",
+      "assets/**",
+      "models/realesrgan_x4plus.onnx",
+      "models/realesrgan_x4plus.onnx.data"
+    ],
+    "asarUnpack": [
+      "upscaler.py",
+      "models/**",
+      "**/node_modules/sharp/**/*",
+      "**/node_modules/@img/**/*"
+    ],
+    "npmRebuild": false,
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Graphics",
+      "icon": "assets/icon.png",
+      "executableName": "ico-converter-xmb",
+      "artifactName": "${name}-${version}-${arch}.${ext}"
+    }
   },
   "keywords": [],
   "author": "",

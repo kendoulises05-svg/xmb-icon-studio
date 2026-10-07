@@ -4,7 +4,7 @@ const fs = require("fs");
 const sharp = require("sharp");
 const crypto = require("crypto");
 const zlib = require("zlib");
-const { spawn, execSync } = require("child_process");
+const { spawn, execFileSync } = require("child_process");
 require("dotenv").config();
 
 const pngToIco = require("png-to-ico").default;
@@ -12,30 +12,45 @@ const pngToIco = require("png-to-ico").default;
 let mainWindow;
 
 /* ─────────────────────────────────────
-   PYTHON DETECTION — prioriza .venv local
+   RUTAS — desarrollo vs app empaquetada
+───────────────────────────────────── */
+// Empaquetada, la app vive dentro de app.asar, que un proceso externo (Python)
+// no puede leer: upscaler.py y models/ van a app.asar.unpacked ("asarUnpack"
+// en package.json). En desarrollo ambas rutas son la carpeta del proyecto.
+const UNPACKED_DIR = app.isPackaged
+  ? __dirname.replace(/app\.asar$/, "app.asar.unpacked")
+  : __dirname;
+
+// Empaquetada no hay .venv del proyecto al lado: se usa uno en la carpeta de
+// datos del usuario (en Linux: ~/.config/ico-converter-xmb/venv).
+const VENV_DIR = app.isPackaged
+  ? path.join(app.getPath("userData"), "venv")
+  : path.join(__dirname, ".venv");
+
+const PY_SETUP_HINT = app.isPackaged
+  ? `python3 -m venv "${VENV_DIR}" && "${path.join(VENV_DIR, "bin", "pip")}" install onnxruntime numpy pillow`
+  : "python3 -m venv .venv && .venv/bin/pip install -r requirements.txt";
+
+/* ─────────────────────────────────────
+   PYTHON DETECTION — prioriza el venv
 ───────────────────────────────────── */
 function getPythonCmd() {
   const isWin = process.platform === "win32";
-  const projectRoot = __dirname;
+  const pyIn  = dir => isWin
+    ? [path.join(dir, "Scripts", "python.exe")]
+    : [path.join(dir, "bin", "python3"), path.join(dir, "bin", "python")];
 
-  // Rutas posibles del venv — Windows usa Scripts/, Unix usa bin/
-  const venvCandidates = isWin
-    ? [
-        path.join(projectRoot, ".venv", "Scripts", "python.exe"),
-        path.join(projectRoot, "venv",  "Scripts", "python.exe"),
-      ]
-    : [
-        path.join(projectRoot, ".venv", "bin", "python3"),
-        path.join(projectRoot, ".venv", "bin", "python"),
-        path.join(projectRoot, "venv",  "bin", "python3"),
-        path.join(projectRoot, "venv",  "bin", "python"),
-      ];
+  // 0 — XMB_PYTHON fuerza un interprete concreto; 1 — venv (ver VENV_DIR)
+  const venvCandidates = [
+    ...(process.env.XMB_PYTHON ? [process.env.XMB_PYTHON] : []),
+    ...pyIn(VENV_DIR),
+    ...(app.isPackaged ? [] : pyIn(path.join(__dirname, "venv"))),
+  ];
 
-  // 1 — Buscar primero en el venv local
   for (const venvPy of venvCandidates) {
     if (fs.existsSync(venvPy)) {
       try {
-        execSync(`"${venvPy}" --version`, { stdio: "ignore" });
+        execFileSync(venvPy, ["--version"], { stdio: "ignore" });
         console.log("[Python] Usando venv:", venvPy);
         return venvPy;
       } catch {}
@@ -49,13 +64,13 @@ function getPythonCmd() {
 
   for (const cmd of globalCandidates) {
     try {
-      execSync(`${cmd} --version`, { stdio: "ignore" });
-      console.log("[Python] Usando global:", cmd);
+      execFileSync(cmd, ["--version"], { stdio: "ignore" });
+      console.log("[Python] Usando global:", cmd, "| venv esperado en:", VENV_DIR);
       return cmd;
     } catch {}
   }
 
-  console.error("[Python] No se encontró Python ni en .venv ni globalmente");
+  console.error("[Python] No se encontró Python ni en el venv ni globalmente. Venv esperado en:", VENV_DIR);
   return null;
 }
 const PYTHON_CMD = getPythonCmd();
@@ -153,6 +168,9 @@ function createWindow() {
     width: 1200, height: 680,
     minWidth: 960, minHeight: 580,
     backgroundColor: "#090c10",
+    // En Linux el icono de la ventana y la barra de tareas sale de aqui
+    // (en Windows lo aporta el ejecutable).
+    icon: path.join(__dirname, "assets", "icon.png"),
     show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -227,9 +245,9 @@ ipcMain.handle("preview-ico-sizes", async (_, filePath) => {
 ───────────────────────────────────── */
 ipcMain.handle("convert-image", async (_, { filePath, format, icoSizes }) => {
   try {
-    const ext = path.extname(filePath);
+    const base = path.basename(filePath, path.extname(filePath));
     const { canceled, filePath: savePath } = await dialog.showSaveDialog({
-      defaultPath: filePath.replace(ext, `.${format}`),
+      defaultPath: path.join(path.dirname(filePath), `${base}.${format}`),
       filters: [{ name: format.toUpperCase(), extensions: [format] }],
     });
     if (canceled) return { success: false };
@@ -252,19 +270,18 @@ ipcMain.handle("convert-image", async (_, { filePath, format, icoSizes }) => {
 function runPython(args) {
   return new Promise((resolve) => {
     if (!PYTHON_CMD) {
-      return resolve({ success: false, error: "Python no encontrado. Instala Python 3." });
+      return resolve({ success: false, error: `Python no encontrado. Crea el entorno con:\n${PY_SETUP_HINT}` });
     }
-    const scriptPath = path.join(__dirname, "upscaler.py");
-    const jsonArgs = JSON.stringify({
-      ...args,
-      input: args.input.replace(/\\/g, "/"),
-      output: args.output.replace(/\\/g, "/"),
-    });
+    const scriptPath = path.join(UNPACKED_DIR, "upscaler.py");
+    // En Linux "\" es un caracter valido dentro de un nombre de archivo:
+    // solo se normaliza a "/" en Windows, donde es el separador.
+    const toPyPath = p => process.platform === "win32" ? p.replace(/\\/g, "/") : p;
+    const jsonArgs = JSON.stringify({ ...args, input: toPyPath(args.input), output: toPyPath(args.output) });
     // Activar el entorno virtual: agregar su carpeta bin/Scripts al PATH
     const venvDir = path.dirname(PYTHON_CMD);
     const envWithVenv = {
       ...process.env,
-      PATH: venvDir + (process.platform === "win32" ? ";" : ":") + (process.env.PATH || ""),
+      PATH: venvDir + path.delimiter + (process.env.PATH || ""),
       VIRTUAL_ENV: path.dirname(venvDir),
       PYTHONPATH: "",          // evitar conflictos con instalaciones globales
     };
@@ -279,11 +296,13 @@ function runPython(args) {
           resolve(result);
         } catch { resolve({ success: false, error: `Respuesta inválida: ${stdout}` }); }
       } else {
-        let msg = stderr || stdout || `Python exit code ${code}`;
-        // Error: falta modulo
-        if (msg.includes("No module named")) {
-          const mod = msg.match(/No module named '([^']+)'/)?.[1] || "modulo";
-          msg = `Falta instalar: pip install ${mod} onnxruntime numpy pillow`;
+        // upscaler.py informa sus propios errores como JSON en stdout
+        let msg;
+        try { msg = JSON.parse(stdout.trim()).error; } catch {}
+        msg = msg || stderr || stdout || `Python exit code ${code}`;
+        // Error: faltan modulos (lo detecta Python al importar o upscaler.py al arrancar)
+        if (msg.includes("No module named") || msg.includes("Faltan dependencias")) {
+          msg = `Faltan dependencias de Python. Instalalas con:\n${PY_SETUP_HINT}`;
         }
         // Error: modelo ONNX no existe todavia
         if (msg.includes("modelo ONNX no existe") || msg.includes("ensure_onnx")) {
@@ -302,13 +321,13 @@ function runPython(args) {
 ipcMain.handle("setup-realesrgan", async (event) => {
   return new Promise((resolve) => {
     if (!PYTHON_CMD) {
-      return resolve({ success: false, error: "Python no encontrado." });
+      return resolve({ success: false, error: `Python no encontrado. Crea el entorno con:\n${PY_SETUP_HINT}` });
     }
-    const scriptPath = path.join(__dirname, "upscaler.py");
+    const scriptPath = path.join(UNPACKED_DIR, "upscaler.py");
     const venvDir    = path.dirname(PYTHON_CMD);
     const envWithVenv = {
       ...process.env,
-      PATH: venvDir + (process.platform === "win32" ? ";" : ":") + (process.env.PATH || ""),
+      PATH: venvDir + path.delimiter + (process.env.PATH || ""),
       VIRTUAL_ENV: path.dirname(venvDir),
       PYTHONPATH: "",
     };
@@ -338,7 +357,7 @@ ipcMain.handle("setup-realesrgan", async (event) => {
 });
 
 ipcMain.handle("check-realesrgan", async () => {
-  const onnxPath = path.join(__dirname, "models", "realesrgan_x4plus.onnx");
+  const onnxPath = path.join(UNPACKED_DIR, "models", "realesrgan_x4plus.onnx");
   const exists   = fs.existsSync(onnxPath);
   const size     = exists ? fs.statSync(onnxPath).size : 0;
   return { exists, size, path: onnxPath };

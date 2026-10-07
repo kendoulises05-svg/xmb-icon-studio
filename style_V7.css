@@ -36,7 +36,7 @@
   --warn:  rgba(68,170,255,0.9);
   --blue:  rgba(68,170,255,0.90);
 
-  --font: 'Rajdhani', 'Segoe UI', sans-serif;
+  --font: 'Rajdhani', 'Segoe UI', 'Noto Sans', sans-serif;
   --mono: 'Share Tech Mono', monospace;
   --ease: cubic-bezier(.4,0,.2,1);
   --xmb:  cubic-bezier(.25,.46,.45,.94);

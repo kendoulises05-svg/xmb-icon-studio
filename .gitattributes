@@ -1,0 +1,14 @@
+# Finales de linea LF en el repo, sin importar el sistema donde se edite.
+* text=auto eol=lf
+
+# Los .bat necesitan CRLF para que cmd.exe los lea bien
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binarios
+*.png binary
+*.jpg binary
+*.ico binary
+*.mp4 binary
+*.onnx binary
+*.pth binary

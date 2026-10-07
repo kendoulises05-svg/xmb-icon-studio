@@ -1,4 +1,12 @@
-npm init -y
-npm install electron sharp png-to-ico dotenv
-npx electron 
-npm start
+# Dependencias de Python para el upscaling con IA (Real-ESRGAN via ONNX Runtime).
+# Instalar dentro de un entorno virtual:
+#   python3 -m venv .venv
+#   .venv/bin/pip install -r requirements.txt          (Linux)
+#   .venv\Scripts\pip install -r requirements.txt      (Windows)
+onnxruntime
+numpy
+pillow
+
+# Solo para REGENERAR models/realesrgan_x4plus.onnx desde el .pth (no hace falta
+# si el .onnx ya esta en models/). Son ~2.5 GB:
+#   torch torchvision basicsr realesrgan
