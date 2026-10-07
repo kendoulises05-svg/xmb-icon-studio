@@ -24,6 +24,15 @@
 <!-- TOASTS -->
 <div id="toasts"></div>
 
+<!-- DRAG & DROP: aviso mientras se arrastran archivos sobre la ventana -->
+<div id="dropOverlay" class="drop-overlay">
+  <div class="drop-overlay-box">
+    <i class="fas fa-file-arrow-down"></i>
+    <span>Suelta para cargar</span>
+    <small>1 imagen → Studio · varios archivos → selección múltiple</small>
+  </div>
+</div>
+
 <!-- LOADING — NO MODIFICADO -->
 <div class="overlay-loading" id="overlayLoading">
   <div class="loading-box">
@@ -654,55 +663,69 @@ document.querySelectorAll('.xmb-menu').forEach(menu => {
   items.forEach((item, i) => { item.dataset.dist = i; });
 });
 
-/* Teclado ← → ↑ ↓ — infinite scroll circular */
+/* Teclado — Enter / Espacio ejecutan el ítem seleccionado del menú activo.
+   Sin navegación con flechas: los íconos solo se mueven con el ratón.
+   Se ignora mientras se escribe en un campo (contraseña, tamaños), para que
+   las teclas escriban en vez de disparar acciones. */
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowLeft')  { activateCol(activeCol - 1); return; }
-  if (e.key === 'ArrowRight') { activateCol(activeCol + 1); return; }
-
-  // Navegación vertical dentro del menú activo
-  const menu = document.getElementById(`menu${activeCol}`);
-  if (!menu) return;
-  const items = Array.from(menu.querySelectorAll('.xmb-item'));
-  if (!items.length) return;
-
-  const curSel = menu.querySelector('.xmb-item.sel');
-  let curIdx   = curSel ? items.indexOf(curSel) : 0;
-
-  if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    curIdx = (curIdx + 1) % items.length;  // circular
-    items.forEach(i => i.classList.remove('sel'));
-    items[curIdx].classList.add('sel');
-    updateItemDists(menu, curIdx);
-  }
-  if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    curIdx = (curIdx - 1 + items.length) % items.length;  // circular
-    items.forEach(i => i.classList.remove('sel'));
-    items[curIdx].classList.add('sel');
-    updateItemDists(menu, curIdx);
-  }
-  if (e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault();
-    const sel = menu.querySelector('.xmb-item.sel');
-    if (sel && sel.dataset.action) handleAction(sel.dataset.action);
-  }
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  if (e.target.closest?.('input, textarea, select')) return;
+  const sel = document.getElementById(`menu${activeCol}`)?.querySelector('.xmb-item.sel');
+  if (!sel) return;
+  e.preventDefault();
+  if (sel.dataset.action) handleAction(sel.dataset.action);
 });
 
 /* Inicializar en col 0 */
 activateCol(0);
 
 /* ══════════════════════════════════════════════
-   DRAG & DROP (imagen)
+   DRAG & DROP — soltar archivos en cualquier parte de la ventana
+   · 1 imagen                  → igual que "Seleccionar Archivo"
+   · varios, o uno no-imagen   → igual que "Seleccionar Múltiples"
+   Después se elige la operación en las columnas, como con los diálogos.
 ══════════════════════════════════════════════ */
-const dropEl = document.getElementById('panelDrop');
-dropEl.addEventListener('dragover',  e => { e.preventDefault(); dropEl.classList.add('dragover'); });
-dropEl.addEventListener('dragleave', () => dropEl.classList.remove('dragover'));
-dropEl.addEventListener('drop', async e => {
-  e.preventDefault(); dropEl.classList.remove('dragover');
-  const f = e.dataTransfer.files[0];
-  if (f && /\.(png|jpe?g|webp|gif|bmp)$/i.test(f.name)) await loadFile(f.path);
-  else toast('Formato no soportado', 'error');
+const IMG_RE      = /\.(png|jpe?g|webp|gif|bmp)$/i;
+const dropOverlay = document.getElementById('dropOverlay');
+let dragDepth     = 0;   // dragenter/dragleave se disparan en cada elemento hijo
+const isFileDrag  = e => e.dataTransfer?.types?.includes('Files');
+
+document.addEventListener('dragenter', e => {
+  if (!isFileDrag(e)) return;
+  e.preventDefault();
+  if (dragDepth++ === 0) dropOverlay.classList.add('show');
+});
+document.addEventListener('dragover', e => {
+  if (!isFileDrag(e)) return;
+  e.preventDefault();               // sin esto el drop no se permite
+  e.dataTransfer.dropEffect = 'copy';
+});
+document.addEventListener('dragleave', e => {
+  if (!isFileDrag(e)) return;
+  if (--dragDepth <= 0) { dragDepth = 0; dropOverlay.classList.remove('show'); }
+});
+document.addEventListener('drop', async e => {
+  e.preventDefault();               // evita que Electron navegue al archivo soltado
+  dragDepth = 0;
+  dropOverlay.classList.remove('show');
+
+  // Leer todo antes del primer await: dataTransfer se vacía al terminar el evento
+  const entries = [...(e.dataTransfer?.items || [])].filter(it => it.kind === 'file');
+  const folders = entries.filter(it => it.webkitGetAsEntry()?.isDirectory).length;
+  const paths   = entries
+    .filter(it => !it.webkitGetAsEntry()?.isDirectory)
+    .map(it => window.api.getPathForFile(it.getAsFile()))
+    .filter(Boolean);
+
+  if (folders) toast(`Se ignoraron ${folders} carpeta(s): arrastra los archivos`, 'warn');
+  if (!paths.length) return;
+
+  if (paths.length === 1 && IMG_RE.test(paths[0])) {
+    await loadFile(paths[0]);
+  } else {
+    addMultiPaths(paths);
+    showPanel('drop');
+  }
 });
 
 /* ══════════════════════════════════════════════
@@ -1411,6 +1434,11 @@ document.getElementById('btnDropMultiAdd')?.addEventListener('click', async () =
 async function openMultiSelect() {
   const paths = await window.api.selectFilesForZip();
   if (!paths || !paths.length) return;
+  addMultiPaths(paths);
+}
+
+// Agregar rutas a la selección múltiple (desde el diálogo o arrastrando archivos)
+function addMultiPaths(paths) {
   let added = 0;
   paths.forEach(fp => {
     const name = fp.split(/[\\/]/).pop();

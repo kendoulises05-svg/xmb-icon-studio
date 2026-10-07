@@ -29,6 +29,7 @@ El proyecto combina procesamiento de imágenes con IA, criptografía y una exper
 - 🎛️ **Interfaz estilo XMB** — Carrusel elíptico giratorio con navegación fluida, inspirado en la PS3.
 - 🔊 **Sonido sintetizado** — Efectos de audio generados con Web Audio API, sin archivos de sonido externos.
 - ⚡ **Procesamiento por lotes** — Convierte múltiples archivos en una sola operación.
+- 🖱️ **Arrastrar y soltar** — Suelta archivos en cualquier parte de la ventana: una imagen se carga directo y varios archivos forman una selección múltiple.
 
 ---
 

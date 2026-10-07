@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {
   openFile:            (opts) => ipcRenderer.invoke("open-file", opts),
@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld("api", {
   decryptFile:         (data) => ipcRenderer.invoke("decrypt-file", data),
   compressZip:         (data) => ipcRenderer.invoke("compress-zip", data),
   selectFilesForZip:   ()     => ipcRenderer.invoke("select-files-for-zip"),
+  // Ruta real de un archivo arrastrado (File.path ya no existe desde Electron 32)
+  getPathForFile:      (file) => webUtils.getPathForFile(file),
 
   // Real-ESRGAN setup
   setupRealESRGAN:     ()     => ipcRenderer.invoke("setup-realesrgan"),
